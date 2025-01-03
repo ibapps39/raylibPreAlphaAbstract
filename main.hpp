@@ -9,6 +9,7 @@
 #define SECTOR_C_RADIUS 50
 #define FINAL_SECTOR_RADIUS 50
 #define ORIGIN 0
+#define TEMP_RADIUS 7
 // #include <vector>
 
 void playerMove(Vector2 &p);
@@ -25,6 +26,7 @@ void enforceBoundary(Vector2 &playerPOS, Vector2 &vec, float boundaryRadius);
 void twoGateCollision(int outerGateRadius, int innerGateRadius, Vector2 &playerPOS, Vector2 &screenHalfVector);
 void cpuMove(Vector2 &p2, const Vector2 &screenCenter, float radius, float &angle, float speed);
 void bodyCollision(Vector2 &vecA, Vector2 &vecB, float force);
+void collisonScorePenalty(float &score, Vector2 &entityA, Vector2 &entityB);
 
 // Basic unit testing for the functions
 void testPlayerMove();
