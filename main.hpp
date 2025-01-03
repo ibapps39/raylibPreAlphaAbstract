@@ -18,11 +18,24 @@ void colorPlayer(Color &playerColor, Vector2 &playerPOS, Vector2 &screenHalfVect
 float fplayerVectorDistance(Vector2 &playerPOS, Vector2 &vec);
 bool inRing(Vector2 &pointVector, Vector2 &ringVector, float innerRadius, float outerRadius);
 bool canMove(float &distance, float &score, float sectorScore, int innerRadius, int outerRadius);
+// maybe radius but may just include that in a vector or struct later
+bool bbodyCollision(Vector2 &vecA, Vector2 &vecB, float distance);
 
 void enforceBoundary(Vector2 &playerPOS, Vector2 &vec, float boundaryRadius);
 void twoGateCollision(int outerGateRadius, int innerGateRadius, Vector2 &playerPOS, Vector2 &screenHalfVector);
 void cpuMove(Vector2 &p2, const Vector2 &screenCenter, float radius, float &angle, float speed);
-void bodyCollision(Vector2 vecA, Vector2 vecB, float speed);
+void bodyCollision(Vector2 &vecA, Vector2 &vecB, float force);
+
+// Basic unit testing for the functions
+void testPlayerMove();
+void testColorPlayer();
+void testFplayerVectorDistance();
+void testInRing();
+void testCanMove();
+void testBbodyCollision();
+void testEnforceBoundary();
+void testTwoGateCollision();
+void testCpuMove();
 
 
 
