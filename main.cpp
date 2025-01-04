@@ -189,6 +189,7 @@ int main()
 
     while (!WindowShouldClose())
     {
+        angle += .02f;
         // Collisions on players
         if (CheckCollisionCircles(playerPOS, 5, cpuPOS, 5))
         {
@@ -197,6 +198,10 @@ int main()
         if (CheckCollisionCircles(playerPOS, 5, playerTwoPOS, 5))
         {
             bodyCollision(playerPOS, playerTwoPOS, 10.0f);
+        }
+        if (CheckCollisionCircles(playerTwoPOS, 5, cpuPOS, 5))
+        {
+            bodyCollision(playerTwoPOS, cpuPOS, 10.0f);
         }
         // rn, score as long as there's a collison. Eventually diff scores, diff penalties based on collision.
         collisonScorePenalty(score, playerPOS, playerTwoPOS);
@@ -208,7 +213,7 @@ int main()
 
         playerMove(playerPOS);
         //mousePlayerMovement(playerPOS);
-        //cpuMove(cpuPOS, screenHalfVector, fplayerVectorDistance(playerPOS, screenHalfVector), angle, cpuSpeed);
+        cpuMove(cpuPOS, screenHalfVector, 170, angle, cpuSpeed);
         playerMoveArrow(playerTwoPOS);
 
         colorPlayer(playerColor, playerPOS, screenHalfVector);
