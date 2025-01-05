@@ -139,7 +139,32 @@ void collisonScorePenalty(float &score, Vector2 &entityA, Vector2 &entityB)
     }
 }
 
+typedef struct playerDistances
+{
+    float playerOne;
+    float playerTwo;
+    float playerCPU;
+} playerDistances;
 
+void updatePlayerDistances(playerDistances &pds,float &p1, float &p2, float &cpu)
+{
+    pds.playerOne = p1;
+    pds.playerTwo = p2;
+    pds.playerCPU = cpu;
+}
+void sectorRegulation(Vector2& player, float playerDistance, float &score, const float sectorInnerRadius, const float sectorOuterRadius, const float sectorScore, Vector2 &centerScreenVector)
+{
+    if (!canMove(playerDistance, score, sectorScore, sectorInnerRadius, sectorOuterRadius) && score <= sectorScore)
+        {
+            twoGateCollision(sectorOuterRadius, sectorInnerRadius, player, centerScreenVector);
+        }
+}
+typedef struct playersPositions
+{
+    Vector2 playerOnePOS;
+    Vector2 playerTwoPOS;
+    Vector2 cpuPOS;
+} playersPOS;
 
 int main()
 {
@@ -168,6 +193,7 @@ int main()
             65
         };
 
+
     Color playerColor;
 
     float currentDistance = 0;
@@ -187,6 +213,8 @@ int main()
     float sectorFourScore = 5000;
     float angle = 0;
 
+    playerDistances pDists = {0.0f, 0.0f, 0.0f};
+    
     while (!WindowShouldClose())
     {
         angle += .02f;
@@ -210,6 +238,8 @@ int main()
         currentDistance = fplayerVectorDistance(playerPOS, screenHalfVector);
         currentDistancePTwo = fplayerVectorDistance(playerTwoPOS, screenHalfVector);
         currentDistancepCPU = fplayerVectorDistance(cpuPOS, screenHalfVector);
+        
+        updatePlayerDistances(pDists, currentDistance, currentDistancePTwo, currentDistancepCPU);
 
         playerMove(playerPOS);
         //mousePlayerMovement(playerPOS);
@@ -226,19 +256,22 @@ int main()
         // SECTOR 1
         score < sectorOneScore ? DrawRing(screenHalfVector, 150, 203, 0, 365, 1, RED) : DrawRing(screenHalfVector, 150, 203, 0, 365, 1, GREEN);
         DrawRing(screenHalfVector, 150, 200, 0, 365, 1, GREEN);
+        sectorRegulation(playerPOS, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenHalfVector);
+        sectorRegulation(playerPOS, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenHalfVector);
+        sectorRegulation(playerPOS, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenHalfVector);
 
-        if (!canMove(currentDistance, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
-        {
-            twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerPOS, screenHalfVector);
-            //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpuPOS, screenHalfVector);
-            //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerTwoPOS, screenHalfVector);
-        }
-        if (!canMove(currentDistancePTwo, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
-        {
-            //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerPOS, screenHalfVector);
-            //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpuPOS, screenHalfVector);
-            twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerTwoPOS, screenHalfVector);
-        }
+        // if (!canMove(currentDistance, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
+        // {
+        //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerPOS, screenHalfVector);
+        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpuPOS, screenHalfVector);
+        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerTwoPOS, screenHalfVector);
+        // }
+        // if (!canMove(currentDistancePTwo, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
+        // {
+        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerPOS, screenHalfVector);
+        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpuPOS, screenHalfVector);
+        //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerTwoPOS, screenHalfVector);
+        // }
         // SECTOR 2
         score < sectorTwoScore ? DrawRing(screenHalfVector, 100, 153, 0, 365, 1, RED) : DrawRing(screenHalfVector, 100, 153, 0, 365, 1, GREEN);
         DrawRing(screenHalfVector, 100, 150, 0, 365, 1, YELLOW);
@@ -286,7 +319,7 @@ int main()
         // Players current position
         DrawText(TextFormat("PX:%.2f, PY:%.2f", playerPOS.x, playerPOS.y), 50, 60, 10, RAYWHITE);
         DrawText(TextFormat("DOC:%.2f", currentDistance), 50, 70, 10, RAYWHITE); // DOC = Dist. of Center
-        DrawText(TextFormat("%f", fplayerVectorDistance(playerPOS, playerTwoPOS)), 50, 80, 10, RAYWHITE);
+        DrawText(TextFormat("P1=%.2f, P2=%.2f, CPU=%.2f", pDists.playerOne, pDists.playerTwo, pDists.playerCPU), 50, 80, 10, RAYWHITE);
         DrawText("You", playerPOS.x, playerPOS.y, 5, BLACK);
         DrawText("CPU", cpuPOS.x, cpuPOS.y, 5, BLACK);
         DrawText("Player2", playerTwoPOS.x, playerTwoPOS.y, 5, BLACK);
