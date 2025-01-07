@@ -1,0 +1,206 @@
+#include "main.hpp"
+#include <cmath>
+
+void playerMove(Player &player, bool useArrowKeys)
+{
+    if (useArrowKeys)
+    {
+        if (IsKeyDown(KEY_RIGHT))
+            player.position.x += 2.0f;
+        if (IsKeyDown(KEY_LEFT))
+            player.position.x -= 2.0f;
+        if (IsKeyDown(KEY_UP))
+            player.position.y -= 2.0f;
+        if (IsKeyDown(KEY_DOWN))
+            player.position.y += 2.0f;
+    }
+    else
+    {
+        if (IsKeyDown(KEY_D))
+            player.position.x += 2.0f;
+        if (IsKeyDown(KEY_A))
+            player.position.x -= 2.0f;
+        if (IsKeyDown(KEY_W))
+            player.position.y -= 2.0f;
+        if (IsKeyDown(KEY_S))
+            player.position.y += 2.0f;
+    }
+}
+
+void cpuMove(Player &cpu, const Vector2 &screenCenter, float radius, float &angle, float speed)
+{
+    angle += speed;
+    if (angle > 2 * PI)
+        angle -= 2 * PI;
+    cpu.position = Vector2Add(screenCenter, Vector2{radius * cosf(angle), radius * sinf(angle)});
+}
+
+float calculateDistance(const Vector2 &a, const Vector2 &b)
+{
+    return Vector2Distance(a, b);
+}
+
+bool inRing(const Vector2 &point, const Vector2 &center, float innerRadius, float outerRadius)
+{
+    float distance = calculateDistance(point, center);
+    return (distance <= outerRadius) && (distance >= innerRadius);
+}
+
+void updatePlayerColor(Player &player, const Vector2 &screenCenter)
+{
+    if (inRing(player.position, screenCenter, SECTOR_A_RADIUS, OUTER_RING_RADIUS))
+        player.color = YELLOW;
+    else if (inRing(player.position, screenCenter, SECTOR_B_RADIUS, SECTOR_A_RADIUS))
+        player.color = MAGENTA;
+    else if (inRing(player.position, screenCenter, SECTOR_C_RADIUS, SECTOR_B_RADIUS))
+        player.color = ORANGE;
+    else if (inRing(player.position, screenCenter, ORIGIN, FINAL_SECTOR_RADIUS))
+        player.color = BLUE;
+    else
+        player.color = WHITE;
+}
+
+void handleCollision(Player &a, Player &b)
+{
+    const float force = 10.0f;
+    Vector2 diff = Vector2Subtract(a.position, b.position);
+    float dist = Vector2Length(diff);
+    if (dist <= TEMP_RADIUS)
+    {
+        Vector2 push = Vector2Scale(Vector2Normalize(diff), force);
+        a.position = Vector2Add(a.position, push);
+        b.position = Vector2Subtract(b.position, push);
+    }
+}
+
+void updateScore(Player &player, const Player &other)
+{
+    if (CheckCollisionCircles(player.position, TEMP_RADIUS, other.position, TEMP_RADIUS))
+    {
+        player.score += 50;
+    }
+}
+
+void sectorRegulation(Player &player, const Sector &sector, const Vector2 &centerScreenVector)
+{
+    float playerDistance = calculateDistance(player.position, centerScreenVector);
+    if (!canMove(player, sector) && player.score <= sector.requiredScore)
+    {
+        if (playerDistance > sector.outerRadius - 5)
+        {
+            enforceBoundary(player, centerScreenVector, sector.outerRadius);
+        }
+        else if (playerDistance < sector.innerRadius + 5)
+        {
+            enforceBoundary(player, centerScreenVector, sector.innerRadius);
+        }
+    }
+}
+
+bool canMove(const Player &player, const Sector &sector)
+{
+    float distance = calculateDistance(player.position, {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f});
+    return player.score < sector.requiredScore && distance > sector.innerRadius && distance < sector.outerRadius;
+}
+
+void enforceBoundary(Player &player, const Vector2 &center, float boundaryRadius)
+{
+    Vector2 direction = Vector2Subtract(player.position, center);
+    float distance = Vector2Length(direction);
+
+    if (distance > boundaryRadius)
+    {
+        Vector2 normalized = Vector2Normalize(direction);
+        player.position = Vector2Add(center, Vector2Scale(normalized, boundaryRadius));
+    }
+}
+
+int main()
+{
+    InitWindow(500, 500, "Circular Arena Game");
+    SetTargetFPS(FPS);
+
+    Vector2 screenCenter = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
+    Player player1 = {{250, 60}, WHITE, 0};
+    Player player2 = {{270, 65}, WHITE, 0};
+    Player cpu = {{240, 60}, WHITE, 0};
+    float cpuAngle = 0;
+    float cpuSpeed = 0.02f;
+
+    Sector sectors[] = {
+        {SECTOR_A_RADIUS, OUTER_RING_RADIUS, 50},
+        {SECTOR_B_RADIUS, SECTOR_A_RADIUS, 500},
+        {SECTOR_C_RADIUS, SECTOR_B_RADIUS, 1000},
+        {ORIGIN, FINAL_SECTOR_RADIUS, 5000}};
+
+    while (!WindowShouldClose())
+    {
+        playerMove(player1, false);
+        playerMove(player2, true);
+        cpuMove(cpu, screenCenter, 170, cpuAngle, cpuSpeed);
+
+        handleCollision(player1, player2);
+        handleCollision(player1, cpu);
+        handleCollision(player2, cpu);
+
+        updateScore(player1, player2);
+        updateScore(player1, cpu);
+        updateScore(player2, cpu);
+
+        updatePlayerColor(player1, screenCenter);
+        updatePlayerColor(player2, screenCenter);
+        updatePlayerColor(cpu, screenCenter);
+
+        for (const auto &sector : sectors)
+        {
+            sectorRegulation(player1, sector, screenCenter);
+            sectorRegulation(player2, sector, screenCenter);
+        }
+
+        BeginDrawing();
+        ClearBackground(BLUE);
+
+        // // Draw sectors and players
+        // for (int i = 0; i < 4; i++)
+        // {
+        //     Color ringColor = player1.score < sectors[i].requiredScore ? RED : GREEN;
+        //     DrawRing(screenCenter, sectors[i].innerRadius, sectors[i].outerRadius, 0, 360, 1, ringColor);
+        //     DrawRing(screenCenter, sectors[i].innerRadius, sectors[i].outerRadius, 0, 360, 1, ringColor);
+        // }
+
+        // SECTOR 1
+        Color ringColor1 = player1.score < sectors[0].requiredScore ? RED : GREEN;
+        DrawRing(screenCenter, sectors[0].innerRadius, sectors[0].outerRadius + 3, 0, 360, 1, ringColor1);
+        DrawRing(screenCenter, sectors[0].innerRadius, sectors[0].outerRadius, 0, 360, 1, GREEN);
+
+        // SECTOR 2
+        Color ringColor2 = player1.score < sectors[1].requiredScore ? RED : GREEN;
+        DrawRing(screenCenter, sectors[1].innerRadius, sectors[1].outerRadius + 3, 0, 360, 1, ringColor2);
+        DrawRing(screenCenter, sectors[1].innerRadius, sectors[1].outerRadius, 0, 360, 1, YELLOW);
+
+        // SECTOR 3
+        Color ringColor3 = player1.score < sectors[2].requiredScore ? RED : GREEN;
+        DrawRing(screenCenter, sectors[2].innerRadius, sectors[2].outerRadius + 3, 0, 360, 1, ringColor3);
+        DrawRing(screenCenter, sectors[2].innerRadius, sectors[2].outerRadius, 0, 360, 1, PURPLE);
+
+        // SECTOR 4
+        Color ringColor4 = player1.score < sectors[3].requiredScore ? RED : GREEN;
+        DrawRing(screenCenter, sectors[3].innerRadius, sectors[3].outerRadius + 3, 0, 360, 1, ringColor4);
+        DrawRing(screenCenter, sectors[3].innerRadius, sectors[3].outerRadius, 0, 360, 1, BLACK);
+
+        DrawCircleV(player1.position, TEMP_RADIUS, player1.color);
+        DrawCircleV(player2.position, TEMP_RADIUS, player2.color);
+        DrawCircleV(cpu.position, TEMP_RADIUS, cpu.color);
+
+        // Draw UI
+        DrawText(TextFormat("Score: %.2f", player1.score), 50, 50, 20, RAYWHITE);
+        DrawText("Player 1", player1.position.x, player1.position.y - 20, 10, BLACK);
+        DrawText("Player 2", player2.position.x, player2.position.y - 20, 10, BLACK);
+        DrawText("CPU", cpu.position.x, cpu.position.y - 20, 10, BLACK);
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+    return 0;
+}
