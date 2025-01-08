@@ -48,11 +48,11 @@ bool canMove(float &distance, float &score, float sectorScore, int innerRadius, 
     return score < sectorScore && distance > innerRadius && distance < outerRadius;
 }
 // Player Distance
-float fplayerVectorDistance(Vector2 &playerOne, Vector2 &vec)
+float fplayerVectorDistance(Vector2 &player, Vector2 &vec)
 {
     // d = √[(x2 - x1)2 + (y2 - y1)2]
-    float dx = playerOne.x - vec.x;
-    float dy = playerOne.y - vec.y;
+    float dx = player.x - vec.x;
+    float dy = player.y - vec.y;
     return sqrtf((dx * dx) + (dy * dy));
 }
 // Boundaries and Collisions
@@ -202,6 +202,11 @@ int main()
     float sectorFourScore = 5000;
     float angle = 0;
 
+    bool SECTOR_ONE_CONDITIONS = (score < sectorOneScore);
+    bool SECTOR_TWO_CONDITIONS = (score >= sectorOneScore && score < sectorTwoScore);
+    bool SECTOR_THREE_CONDITIONS = (score > sectorTwoScore && score <= sectorThreeScore);
+    bool SECTOR_FOUR_CONDITIONS = (score > sectorThreeScore && score <= sectorFourScore);
+
     Player playerOne = {{250, 60}, WHITE, scorePlayerOne};
     Player player2 = {{270, 65}, WHITE, scorePlayerTwo};
     Player cpu = {{260, 70}, WHITE, scoreCPU};
@@ -249,32 +254,20 @@ int main()
         // SECTOR 1
         score < sectorOneScore ? DrawRing(screenCenter, 150, 203, 0, 365, 1, RED) : DrawRing(screenCenter, 150, 203, 0, 365, 1, GREEN);
         DrawRing(screenCenter, 150, 200, 0, 365, 1, GREEN);
-        sectorRegulation(playerOne, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
-        sectorRegulation(player2, pDists.playerTwo, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
-        sectorRegulation(cpu, pDists.playerCPU, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
-
-        // if (!canMove(currentDistance, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
-        // {
-        //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerOne, screenCenter);
-        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpu, screenCenter);
-        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, player2, screenCenter);
-        // }
-        // if (!canMove(currentDistancePTwo, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
-        // {
-        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerOne, screenCenter);
-        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpu, screenCenter);
-        //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, player2, screenCenter);
-        // }
+        if (SECTOR_ONE_CONDITIONS)
+        {
+            sectorRegulation(playerOne, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
+            sectorRegulation(player2, pDists.playerTwo, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
+            sectorRegulation(cpu, pDists.playerCPU, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
+        }
         // SECTOR 2
         score < sectorTwoScore ? DrawRing(screenCenter, 100, 153, 0, 365, 1, RED) : DrawRing(screenCenter, 100, 153, 0, 365, 1, GREEN);
         DrawRing(screenCenter, 100, 150, 0, 365, 1, YELLOW);
-        if (!canMove(currentDistance, score, sectorTwoScore, sectorTwoRadiusGate, sectorOneRadiusGate) && score > sectorOneScore && score <= sectorTwoScore)
+        if (SECTOR_TWO_CONDITIONS)
         {
-            twoGateCollision(sectorOneRadiusGate, sectorTwoRadiusGate, playerOne, screenCenter);
-        }
-        if (!canMove(currentDistancePTwo, score, sectorTwoScore, sectorTwoRadiusGate, sectorOneRadiusGate) && score > sectorOneScore && score <= sectorTwoScore)
-        {
-            twoGateCollision(sectorOneRadiusGate, sectorTwoRadiusGate, player2, screenCenter);
+            sectorRegulation(playerOne, pDists.playerOne, score, sectorTwoRadiusGate, sectorOneRadiusGate, sectorTwoScore, screenCenter);
+            sectorRegulation(player2, pDists.playerTwo, score, sectorTwoRadiusGate, sectorOneRadiusGate, sectorTwoScore, screenCenter);
+            sectorRegulation(cpu, pDists.playerCPU, score, sectorTwoRadiusGate, sectorOneRadiusGate, sectorTwoScore, screenCenter);
         }
         // SECTOR 3
         score < sectorThreeScore ? DrawRing(screenCenter, 50, 103, 0, 365, 1, RED) : DrawRing(screenCenter, 50, 103, 0, 365, 1, GREEN);
