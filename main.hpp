@@ -35,8 +35,8 @@ bool canMove(float &distance, float &score, float sectorScore, int innerRadius, 
 // maybe radius but may just include that in a vector or struct later
 bool bbodyCollision(Vector2 &vecA, Vector2 &vecB, float distance);
 
-void enforceBoundary(Vector2 &playerPOS, Vector2 &vec, float boundaryRadius);
-void twoGateCollision(int outerGateRadius, int innerGateRadius, Vector2 &playerPOS, Vector2 &screenHalfVector);
+void enforceBoundary(Player &player, const Vector2 &vec, float boundaryRadius);
+void twoGateCollision(int outerGateRadius, int innerGateRadius, Player &player, Vector2 &screenCenter);
 void cpuMove(Vector2 &p2, const Vector2 &screenCenter, float radius, float &angle, float speed);
 void bodyCollision(Vector2 &vecA, Vector2 &vecB, float force);
 void collisonScorePenalty(float &score, Vector2 &entityA, Vector2 &entityB);
@@ -54,7 +54,7 @@ void testCpuMove();
 
 struct playerDistances;
 void updatePlayerDistances(playerDistances &pds,float &p1, float &p2, float &cpu);
-void sectorRegulation(Vector2& player, float playerDistance, float &score, const float sectorInnerRadius, const float sectorOuterRadius, const float sectorScore, Vector2 &centerScreenVector);
+void sectorRegulation(Player &player, float playerDistance, float &score, const float sectorInnerRadius, const float sectorOuterRadius, const float sectorScore, Vector2 &centerScreenVector);
 
 struct playersPositions;
 

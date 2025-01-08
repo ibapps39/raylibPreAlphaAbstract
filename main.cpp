@@ -48,18 +48,18 @@ bool canMove(float &distance, float &score, float sectorScore, int innerRadius, 
     return score < sectorScore && distance > innerRadius && distance < outerRadius;
 }
 // Player Distance
-float fplayerVectorDistance(Vector2 &player1, Vector2 &vec)
+float fplayerVectorDistance(Vector2 &playerOne, Vector2 &vec)
 {
     // d = √[(x2 - x1)2 + (y2 - y1)2]
-    float dx = player1.x - vec.x;
-    float dy = player1.y - vec.y;
+    float dx = playerOne.x - vec.x;
+    float dy = playerOne.y - vec.y;
     return sqrtf((dx * dx) + (dy * dy));
 }
 // Boundaries and Collisions
 // We know the distance, need to offset player vector to position outside of boudnary
 void enforceBoundary(Player &player, const Vector2 &vec, float boundaryRadius)
 {
-    // New Vector Components. -player1 so we go (-)opposite direction of offending direction <vec.x, vec.y>
+    // New Vector Components. -playerOne so we go (-)opposite direction of offending direction <vec.x, vec.y>
     float dirX = vec.x - player.position.x;
     float dirY = vec.y - player.position.y;
     // New Vector Length
@@ -112,12 +112,12 @@ bool bbodyCollision(Vector2 &vecA, Vector2 &vecB)
 }
 
 // Player aesethetics
-void colorPlayer(Color &playerColor, Vector2 &player1, Vector2 &screenCenter)
+void colorPlayer(Color &playerColor, Vector2 &playerOne, Vector2 &screenCenter)
 {
-    bool inSector1 = inRing(player1, screenCenter, SECTOR_A_RADIUS, OUTER_RING_RADIUS);
-    bool inSector2 = inRing(player1, screenCenter, SECTOR_B_RADIUS, SECTOR_A_RADIUS);
-    bool inSector3 = inRing(player1, screenCenter, SECTOR_C_RADIUS, SECTOR_B_RADIUS);
-    bool inSector4 = inRing(player1, screenCenter, ORIGIN, FINAL_SECTOR_RADIUS);
+    bool inSector1 = inRing(playerOne, screenCenter, SECTOR_A_RADIUS, OUTER_RING_RADIUS);
+    bool inSector2 = inRing(playerOne, screenCenter, SECTOR_B_RADIUS, SECTOR_A_RADIUS);
+    bool inSector3 = inRing(playerOne, screenCenter, SECTOR_C_RADIUS, SECTOR_B_RADIUS);
+    bool inSector4 = inRing(playerOne, screenCenter, ORIGIN, FINAL_SECTOR_RADIUS);
 
     if (inSector1)
         playerColor = YELLOW;
@@ -131,7 +131,7 @@ void colorPlayer(Color &playerColor, Vector2 &player1, Vector2 &screenCenter)
         playerColor = WHITE;
 }
 
-// FOR NOW: only player1
+// FOR NOW: only playerOne
 void collisonScorePenalty(float &score, Vector2 &entityA, Vector2 &entityB)
 {
     if (bbodyCollision(entityA, entityB))
@@ -153,7 +153,7 @@ void updatePlayerDistances(playerDistances &pds,float &p1, float &p2, float &cpu
     pds.playerTwo = p2;
     pds.playerCPU = cpu;
 }
-void sectorRegulation(Vector2& player, float playerDistance, float &score, const float sectorInnerRadius, const float sectorOuterRadius, const float sectorScore, Vector2 &centerScreenVector)
+void sectorRegulation(Player &player, float playerDistance, float &score, const float sectorInnerRadius, const float sectorOuterRadius, const float sectorScore, Vector2 &centerScreenVector)
 {
     if (!canMove(playerDistance, score, sectorScore, sectorInnerRadius, sectorOuterRadius) && score <= sectorScore)
         {
@@ -180,10 +180,6 @@ int main()
     //Vector2 screenCenter = {fScreenHalf, fScreenHalf};
     Vector2 screenCenter = {GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f};
 
-    Player player1 = {{250, 60}, WHITE, STARTING_SCORE};
-    Player player2 = {{270, 65}, WHITE, STARTING_SCORE};
-    Player cpu = {{260, 70}, WHITE, STARTING_SCORE};
-
     Color playerColor;
 
     float currentDistance = 0;
@@ -197,11 +193,18 @@ int main()
     int sectorFourRadiusGate = 50;
 
     float score = 0;
+    float scorePlayerOne = 0.0f;
+    float scorePlayerTwo = 0.0f;
+    float scoreCPU = 0.0f;
     float sectorOneScore = 50;
     float sectorTwoScore = 500;
     float sectorThreeScore = 1000;
     float sectorFourScore = 5000;
     float angle = 0;
+
+    Player playerOne = {{250, 60}, WHITE, scorePlayerOne};
+    Player player2 = {{270, 65}, WHITE, scorePlayerTwo};
+    Player cpu = {{260, 70}, WHITE, scoreCPU};
 
     playerDistances pDists = {0.0f, 0.0f, 0.0f};
     
@@ -209,33 +212,34 @@ int main()
     {
         angle += .02f;
         // Collisions on players
-        if (CheckCollisionCircles(player1.position, 5, cpu.position, 5))
+        if (CheckCollisionCircles(playerOne.position, 5, cpu.position, 5))
         {
-            bodyCollision(player1.position, cpu.position, 10.0f);
+            bodyCollision(playerOne.position, cpu.position, 10.0f);
         }
-        if (CheckCollisionCircles(player1.position, 5, player2.position, 5))
+        if (CheckCollisionCircles(playerOne.position, 5, player2.position, 5))
         {
-            bodyCollision(player1.position, player2.position, 10.0f);
+            bodyCollision(playerOne.position, player2.position, 10.0f);
         }
         if (CheckCollisionCircles(player2.position, 5, cpu.position, 5))
         {
             bodyCollision(player2.position, cpu.position, 10.0f);
         }
         // rn, score as long as there's a collison. Eventually diff scores, diff penalties based on collision.
-        collisonScorePenalty(score, player1.position, player2.position);
+        collisonScorePenalty(score, playerOne.position, player2.position);
 
         
-        currentDistance = fplayerVectorDistance(player1.position, screenCenter);
+        currentDistance = fplayerVectorDistance(playerOne.position, screenCenter);
         currentDistancePTwo = fplayerVectorDistance(player2.position, screenCenter);
         currentDistancepCPU = fplayerVectorDistance(cpu.position, screenCenter);
         
         updatePlayerDistances(pDists, currentDistance, currentDistancePTwo, currentDistancepCPU);
 
-        playerMove(player1, 0);
-        //mousePlayerMovement(player1);
+        playerMove(playerOne, 0);
+        playerMove(player2, 1);
+        //mousePlayerMovement(playerOne);
         cpuMove(cpu.position, screenCenter, 170, angle, cpuSpeed);
 
-        colorPlayer(playerColor, player1.position, screenCenter);
+        colorPlayer(playerColor, playerOne.position, screenCenter);
         colorPlayer(playerColor, cpu.position, screenCenter);
         colorPlayer(playerColor, player2.position, screenCenter);
 
@@ -245,19 +249,19 @@ int main()
         // SECTOR 1
         score < sectorOneScore ? DrawRing(screenCenter, 150, 203, 0, 365, 1, RED) : DrawRing(screenCenter, 150, 203, 0, 365, 1, GREEN);
         DrawRing(screenCenter, 150, 200, 0, 365, 1, GREEN);
-        sectorRegulation(player1.position, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
-        sectorRegulation(player1.position, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
-        sectorRegulation(player1.position, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
+        sectorRegulation(playerOne, pDists.playerOne, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
+        sectorRegulation(player2, pDists.playerTwo, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
+        sectorRegulation(cpu, pDists.playerCPU, score, sectorOneRadiusGate, outermostRadiusGate, sectorOneScore, screenCenter);
 
         // if (!canMove(currentDistance, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
         // {
-        //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, player1, screenCenter);
+        //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerOne, screenCenter);
         //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpu, screenCenter);
         //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, player2, screenCenter);
         // }
         // if (!canMove(currentDistancePTwo, score, sectorOneScore, sectorOneRadiusGate, 200) && score <= sectorOneScore)
         // {
-        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, player1, screenCenter);
+        //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, playerOne, screenCenter);
         //     //twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, cpu, screenCenter);
         //     twoGateCollision(outermostRadiusGate, sectorOneRadiusGate, player2, screenCenter);
         // }
@@ -266,11 +270,11 @@ int main()
         DrawRing(screenCenter, 100, 150, 0, 365, 1, YELLOW);
         if (!canMove(currentDistance, score, sectorTwoScore, sectorTwoRadiusGate, sectorOneRadiusGate) && score > sectorOneScore && score <= sectorTwoScore)
         {
-            twoGateCollision(sectorOneRadiusGate, sectorTwoRadiusGate, player1.position, screenCenter);
+            twoGateCollision(sectorOneRadiusGate, sectorTwoRadiusGate, playerOne, screenCenter);
         }
         if (!canMove(currentDistancePTwo, score, sectorTwoScore, sectorTwoRadiusGate, sectorOneRadiusGate) && score > sectorOneScore && score <= sectorTwoScore)
         {
-            twoGateCollision(sectorOneRadiusGate, sectorTwoRadiusGate, player2.position, screenCenter);
+            twoGateCollision(sectorOneRadiusGate, sectorTwoRadiusGate, player2, screenCenter);
         }
         // SECTOR 3
         score < sectorThreeScore ? DrawRing(screenCenter, 50, 103, 0, 365, 1, RED) : DrawRing(screenCenter, 50, 103, 0, 365, 1, GREEN);
@@ -278,38 +282,38 @@ int main()
         // BUG, they got stuck
         if (!canMove(currentDistance, score, sectorThreeScore, sectorThreeRadiusGate, sectorTwoRadiusGate) && score > sectorTwoScore && score <= sectorThreeScore)
         {
-            twoGateCollision(sectorTwoRadiusGate, sectorThreeRadiusGate, player1.position, screenCenter);
+            twoGateCollision(sectorTwoRadiusGate, sectorThreeRadiusGate, playerOne, screenCenter);
         }
         if (!canMove(currentDistancePTwo, score, sectorThreeScore, sectorThreeRadiusGate, sectorTwoRadiusGate) && score > sectorTwoScore && score <= sectorThreeScore)
         {
-            twoGateCollision(sectorTwoRadiusGate, sectorThreeRadiusGate, player2.position, screenCenter);
+            twoGateCollision(sectorTwoRadiusGate, sectorThreeRadiusGate, player2, screenCenter);
         }
         // SECTOR 4
         score < sectorFourScore ? DrawRing(screenCenter, 0, 53, 0, 365, 1, RED) : DrawRing(screenCenter, 0, 53, 0, 365, 1, GREEN);
         DrawRing(screenCenter, 0, 50, 0, 365, 1, BLACK);
         if (!canMove(currentDistance, score, sectorFourScore, sectorFourRadiusGate, sectorThreeRadiusGate) && score > sectorThreeScore && score <= sectorFourScore)
         {
-            if (sectorThreeRadiusGate - fplayerVectorDistance(player1.position, screenCenter) < 5)
-                enforceBoundary(player1.position, screenCenter, sectorThreeRadiusGate);
+            if (sectorThreeRadiusGate - fplayerVectorDistance(playerOne.position, screenCenter) < 5)
+                enforceBoundary(playerOne, screenCenter, sectorThreeRadiusGate);
         }
         if (!canMove(currentDistancePTwo, score, sectorFourScore, sectorFourRadiusGate, sectorThreeRadiusGate) && score > sectorThreeScore && score <= sectorFourScore)
         {
             if (sectorThreeRadiusGate - fplayerVectorDistance(player2.position, screenCenter) < 5)
-                enforceBoundary(player2.position, screenCenter, sectorThreeRadiusGate);
+                enforceBoundary(player2, screenCenter, sectorThreeRadiusGate);
         }
 
         // PLAYER
-        DrawCircle(player1.position.x, player1.position.y, 5, playerColor);
+        DrawCircle(playerOne.position.x, playerOne.position.y, 5, playerColor);
         DrawCircle(cpu.position.x, cpu.position.y, 5, playerColor);
         DrawCircle(player2.position.x, player2.position.y, 5, playerColor);
-        // DrawLineEx(player1, screenCenter, 5, RED);
+        // DrawLineEx(playerOne, screenCenter, 5, RED);
         //  SCORE
         DrawText(TextFormat("%.2f", score), 50, 50, 10, RAYWHITE);
         // Players current position
-        DrawText(TextFormat("PX:%.2f, PY:%.2f", player1.position.x, player1.position.y), 50, 60, 10, RAYWHITE);
+        DrawText(TextFormat("PX:%.2f, PY:%.2f", playerOne.position.x, playerOne.position.y), 50, 60, 10, RAYWHITE);
         DrawText(TextFormat("DOC:%.2f", currentDistance), 50, 70, 10, RAYWHITE); // DOC = Dist. of Center
         DrawText(TextFormat("P1=%.2f, P2=%.2f, CPU=%.2f", pDists.playerOne, pDists.playerTwo, pDists.playerCPU), 50, 80, 10, RAYWHITE);
-        DrawText("You", player1.position.x, player1.position.y, 5, BLACK);
+        DrawText("You", playerOne.position.x, playerOne.position.y, 5, BLACK);
         DrawText("CPU", cpu.position.x, cpu.position.y, 5, BLACK);
         DrawText("Player2", player2.position.x, player2.position.y, 5, BLACK);
 
